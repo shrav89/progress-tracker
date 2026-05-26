@@ -1,5 +1,72 @@
 import React, { useState, useEffect } from 'react';
 
+// Color tokens per theme. Dark values match the original hardcoded palette
+// exactly so dark mode is unchanged; light supplies readable equivalents.
+const themes = {
+  dark: {
+    bg: '#030712',
+    surface: '#111827',
+    surface2: '#1f2937',
+    border: '#374151',
+    borderSubtle: '#1f2937',
+    headerBg: 'linear-gradient(to right, #111827, #1f2937)',
+    navBarBg: 'rgba(0,0,0,0.3)',
+    btnBg: '#374151',
+    btnText: '#d1d5db',
+    text: '#f3f4f6',
+    titleText: 'white',
+    textStrong: '#e5e7eb',
+    text2: '#d1d5db',
+    textMuted: '#9ca3af',
+    textFaint: '#6b7280',
+    muted2: '#4b5563',
+    tintStrong: 'rgba(31, 41, 55, 0.5)',
+    tintMed: 'rgba(17, 24, 39, 0.5)',
+    tintWeak: 'rgba(31, 41, 55, 0.3)',
+    successText: '#34d399',
+    successTextBright: '#4ade80',
+    successTextPale: '#a7f3d0',
+    successBadgeText: '#6ee7b7',
+    dangerText: '#fca5a5',
+    dangerTextBright: '#f87171',
+    warnText: '#fbbf24',
+    warnTextPale: '#fcd34d',
+    purpleText: '#a78bfa',
+    infoText: '#60a5fa'
+  },
+  light: {
+    bg: '#f3f4f6',
+    surface: '#ffffff',
+    surface2: '#f3f4f6',
+    border: '#e5e7eb',
+    borderSubtle: '#e5e7eb',
+    headerBg: 'linear-gradient(to right, #ffffff, #eef2f7)',
+    navBarBg: 'rgba(0,0,0,0.05)',
+    btnBg: '#e5e7eb',
+    btnText: '#374151',
+    text: '#111827',
+    titleText: '#111827',
+    textStrong: '#1f2937',
+    text2: '#374151',
+    textMuted: '#6b7280',
+    textFaint: '#9ca3af',
+    muted2: '#cbd5e1',
+    tintStrong: 'rgba(0, 0, 0, 0.04)',
+    tintMed: 'rgba(0, 0, 0, 0.025)',
+    tintWeak: 'rgba(0, 0, 0, 0.025)',
+    successText: '#047857',
+    successTextBright: '#059669',
+    successTextPale: '#065f46',
+    successBadgeText: '#047857',
+    dangerText: '#b91c1c',
+    dangerTextBright: '#dc2626',
+    warnText: '#b45309',
+    warnTextPale: '#92400e',
+    purpleText: '#7c3aed',
+    infoText: '#2563eb'
+  }
+};
+
 const App = () => {
   const [currentWeek, setCurrentWeek] = useState(1);
   const [activeView, setActiveView] = useState('plan');
@@ -7,7 +74,9 @@ const App = () => {
   const [lastSaved, setLastSaved] = useState(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [checkedPlanTasks, setCheckedPlanTasks] = useState({});
-  
+  const [theme, setTheme] = useState('dark');
+  const t = themes[theme];
+
   const defaultWeekData = {
     1: {
       days: {
@@ -111,6 +180,7 @@ const App = () => {
         setCurrentWeek(parsed.currentWeek || 1);
         setLastSaved(parsed.lastSaved || null);
         setCheckedPlanTasks(parsed.checkedPlanTasks || {});
+        if (parsed.theme === 'light' || parsed.theme === 'dark') setTheme(parsed.theme);
       }
     } catch (e) {
       console.error('Error loading saved data:', e);
@@ -125,6 +195,7 @@ const App = () => {
           weekData,
           currentWeek,
           checkedPlanTasks,
+          theme,
           lastSaved: new Date().toISOString()
         };
         localStorage.setItem('thirtyDayTracker', JSON.stringify(saveData));
@@ -133,7 +204,12 @@ const App = () => {
         console.error('Error saving data:', e);
       }
     }
-  }, [weekData, currentWeek, checkedPlanTasks, isLoaded]);
+  }, [weekData, currentWeek, checkedPlanTasks, theme, isLoaded]);
+
+  // Keep the page background (incl. overscroll) in sync with the theme.
+  useEffect(() => {
+    document.body.style.backgroundColor = t.bg;
+  }, [t.bg]);
 
   const weekThemes = {
     1: { title: 'Setup & First Steps', color: 'blue' },
@@ -547,8 +623,8 @@ const App = () => {
 
   if (!isLoaded) {
     return (
-      <div style={{ minHeight: '100vh', backgroundColor: '#030712', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ color: '#9ca3af' }}>Loading your progress...</div>
+      <div style={{ minHeight: '100vh', backgroundColor: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: t.textMuted }}>Loading your progress...</div>
       </div>
     );
   }
@@ -556,13 +632,14 @@ const App = () => {
   const styles = {
     container: {
       minHeight: '100vh',
-      backgroundColor: '#030712',
-      color: '#f3f4f6',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      backgroundColor: t.bg,
+      color: t.text,
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      transition: 'background-color 0.2s, color 0.2s'
     },
     header: {
-      background: 'linear-gradient(to right, #111827, #1f2937)',
-      borderBottom: '1px solid #374151',
+      background: t.headerBg,
+      borderBottom: `1px solid ${t.border}`,
       padding: '24px 16px'
     },
     headerContent: {
@@ -579,11 +656,11 @@ const App = () => {
     title: {
       fontSize: '24px',
       fontWeight: 'bold',
-      color: 'white',
+      color: t.titleText,
       margin: 0
     },
     subtitle: {
-      color: '#9ca3af',
+      color: t.textMuted,
       fontSize: '14px',
       marginTop: '4px'
     },
@@ -596,16 +673,16 @@ const App = () => {
     saveDot: {
       width: '8px',
       height: '8px',
-      backgroundColor: '#4ade80',
+      backgroundColor: t.successTextBright,
       borderRadius: '50%'
     },
     saveText: {
       fontSize: '12px',
-      color: '#4ade80'
+      color: t.successTextBright
     },
     lastSaved: {
       fontSize: '12px',
-      color: '#6b7280'
+      color: t.textFaint
     },
     buttonGroup: {
       display: 'flex',
@@ -614,10 +691,10 @@ const App = () => {
     },
     button: {
       padding: '6px 12px',
-      backgroundColor: '#374151',
+      backgroundColor: t.btnBg,
       border: 'none',
       borderRadius: '4px',
-      color: '#d1d5db',
+      color: t.btnText,
       fontSize: '14px',
       cursor: 'pointer'
     },
@@ -626,7 +703,7 @@ const App = () => {
       backgroundColor: 'rgba(127, 29, 29, 0.5)',
       border: 'none',
       borderRadius: '4px',
-      color: '#fca5a5',
+      color: t.dangerText,
       fontSize: '14px',
       cursor: 'pointer'
     },
@@ -647,8 +724,8 @@ const App = () => {
       color: 'white'
     },
     weekButtonInactive: {
-      backgroundColor: '#1f2937',
-      color: '#9ca3af'
+      backgroundColor: t.surface2,
+      color: t.textMuted
     },
     weekLabel: {
       fontSize: '12px',
@@ -663,8 +740,8 @@ const App = () => {
       opacity: 0.75
     },
     statsBar: {
-      backgroundColor: '#111827',
-      borderBottom: '1px solid #1f2937',
+      backgroundColor: t.surface,
+      borderBottom: `1px solid ${t.borderSubtle}`,
       padding: '16px'
     },
     statsGrid: {
@@ -680,16 +757,16 @@ const App = () => {
     statValue: {
       fontSize: '24px',
       fontWeight: 'bold',
-      color: 'white'
+      color: t.titleText
     },
     statValueGreen: {
       fontSize: '24px',
       fontWeight: 'bold',
-      color: '#34d399'
+      color: t.successText
     },
     statLabel: {
       fontSize: '12px',
-      color: '#6b7280'
+      color: t.textFaint
     },
     content: {
       maxWidth: '896px',
@@ -699,7 +776,7 @@ const App = () => {
     viewToggle: {
       display: 'inline-flex',
       gap: '8px',
-      backgroundColor: '#111827',
+      backgroundColor: t.surface,
       padding: '4px',
       borderRadius: '8px',
       marginBottom: '24px'
@@ -713,15 +790,15 @@ const App = () => {
       cursor: 'pointer'
     },
     viewButtonActive: {
-      backgroundColor: '#374151',
-      color: 'white'
+      backgroundColor: t.btnBg,
+      color: t.text
     },
     viewButtonInactive: {
       backgroundColor: 'transparent',
-      color: '#9ca3af'
+      color: t.textMuted
     },
     dayCard: {
-      backgroundColor: '#111827',
+      backgroundColor: t.surface,
       borderRadius: '8px',
       marginBottom: '12px',
       overflow: 'hidden',
@@ -736,11 +813,11 @@ const App = () => {
     },
     dayLabelComplete: {
       backgroundColor: 'rgba(20, 83, 45, 0.5)',
-      color: '#4ade80'
+      color: t.successTextBright
     },
     dayLabelIncomplete: {
-      backgroundColor: '#1f2937',
-      color: '#9ca3af'
+      backgroundColor: t.surface2,
+      color: t.textMuted
     },
     dayContent: {
       flex: 1,
@@ -751,21 +828,21 @@ const App = () => {
     },
     hoursInput: {
       width: '80px',
-      backgroundColor: '#1f2937',
-      border: '1px solid #374151',
+      backgroundColor: t.surface2,
+      border: `1px solid ${t.border}`,
       borderRadius: '4px',
       padding: '8px 12px',
       textAlign: 'center',
-      color: 'white',
+      color: t.text,
       fontSize: '14px'
     },
     taskInput: {
       flex: 1,
-      backgroundColor: '#1f2937',
-      border: '1px solid #374151',
+      backgroundColor: t.surface2,
+      border: `1px solid ${t.border}`,
       borderRadius: '4px',
       padding: '8px 12px',
-      color: 'white',
+      color: t.text,
       fontSize: '14px'
     },
     checkButton: {
@@ -786,19 +863,19 @@ const App = () => {
     },
     checkButtonIncomplete: {
       backgroundColor: 'transparent',
-      borderColor: '#4b5563',
-      color: '#4b5563'
+      borderColor: t.muted2,
+      color: t.muted2
     },
     card: {
-      backgroundColor: '#111827',
+      backgroundColor: t.surface,
       borderRadius: '8px',
-      border: '1px solid #1f2937',
+      border: `1px solid ${t.borderSubtle}`,
       padding: '24px',
       marginBottom: '24px'
     },
     cardTitle: {
       fontWeight: '600',
-      color: 'white',
+      color: t.titleText,
       marginBottom: '16px',
       fontSize: '16px'
     },
@@ -816,8 +893,8 @@ const App = () => {
       border: '1px solid #15803d'
     },
     goalIncomplete: {
-      backgroundColor: '#1f2937',
-      border: '1px solid #374151'
+      backgroundColor: t.surface2,
+      border: `1px solid ${t.border}`
     },
     goalCheck: {
       width: '24px',
@@ -835,7 +912,7 @@ const App = () => {
       color: 'white'
     },
     goalCheckIncomplete: {
-      borderColor: '#4b5563'
+      borderColor: t.muted2
     },
     goalInput: {
       flex: 1,
@@ -847,27 +924,27 @@ const App = () => {
     },
     label: {
       fontSize: '14px',
-      color: '#9ca3af',
+      color: t.textMuted,
       marginBottom: '4px',
       display: 'block'
     },
     input: {
       width: '100%',
-      backgroundColor: '#1f2937',
-      border: '1px solid #374151',
+      backgroundColor: t.surface2,
+      border: `1px solid ${t.border}`,
       borderRadius: '4px',
       padding: '8px 12px',
-      color: 'white',
+      color: t.text,
       fontSize: '14px',
       boxSizing: 'border-box'
     },
     textarea: {
       width: '100%',
-      backgroundColor: '#1f2937',
-      border: '1px solid #374151',
+      backgroundColor: t.surface2,
+      border: `1px solid ${t.border}`,
       borderRadius: '4px',
       padding: '12px',
-      color: 'white',
+      color: t.text,
       fontSize: '14px',
       resize: 'none',
       boxSizing: 'border-box'
@@ -894,21 +971,21 @@ const App = () => {
       padding: '16px'
     },
     modalContent: {
-      backgroundColor: '#111827',
+      backgroundColor: t.surface,
       borderRadius: '12px',
       padding: '24px',
       maxWidth: '400px',
       width: '100%',
-      border: '1px solid #374151'
+      border: `1px solid ${t.border}`
     },
     modalTitle: {
       fontSize: '20px',
       fontWeight: 'bold',
-      color: 'white',
+      color: t.titleText,
       marginBottom: '12px'
     },
     modalText: {
-      color: '#9ca3af',
+      color: t.textMuted,
       marginBottom: '24px'
     },
     modalButtons: {
@@ -918,7 +995,7 @@ const App = () => {
     },
     reviewSection: {
       padding: '12px',
-      backgroundColor: '#111827',
+      backgroundColor: t.surface,
       borderRadius: '8px',
       marginBottom: '8px'
     },
@@ -927,17 +1004,17 @@ const App = () => {
       marginBottom: '8px'
     },
     reviewList: {
-      color: '#9ca3af',
+      color: t.textMuted,
       fontSize: '14px'
     },
     footer: {
       maxWidth: '896px',
       margin: '0 auto',
       padding: '24px 16px',
-      borderTop: '1px solid #1f2937',
+      borderTop: `1px solid ${t.borderSubtle}`,
       textAlign: 'center',
       fontSize: '14px',
-      color: '#6b7280'
+      color: t.textFaint
     }
   };
 
@@ -970,6 +1047,14 @@ const App = () => {
               </div>
             </div>
             <div style={styles.buttonGroup}>
+              <button
+                style={styles.button}
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                aria-label="Toggle color theme"
+              >
+                {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+              </button>
               <button style={styles.button} onClick={exportData}>Export Backup</button>
               <label style={{ ...styles.button, cursor: 'pointer' }}>
                 Import
@@ -985,7 +1070,7 @@ const App = () => {
             gap: '8px',
             marginTop: '20px',
             padding: '6px',
-            backgroundColor: 'rgba(0,0,0,0.3)',
+            backgroundColor: t.navBarBg,
             borderRadius: '12px',
             width: 'fit-content'
           }}>
@@ -996,7 +1081,7 @@ const App = () => {
                 backgroundColor: globalView === 'weeks' ? '#3b82f6' : 'transparent',
                 border: 'none',
                 borderRadius: '8px',
-                color: 'white',
+                color: globalView === 'weeks' ? 'white' : t.text,
                 fontSize: '14px',
                 fontWeight: '600',
                 cursor: 'pointer',
@@ -1012,7 +1097,7 @@ const App = () => {
                 backgroundColor: globalView === 'ideas' ? '#7c3aed' : 'transparent',
                 border: 'none',
                 borderRadius: '8px',
-                color: 'white',
+                color: globalView === 'ideas' ? 'white' : t.text,
                 fontSize: '14px',
                 fontWeight: '600',
                 cursor: 'pointer',
@@ -1028,7 +1113,7 @@ const App = () => {
                 backgroundColor: globalView === 'resources' ? '#059669' : 'transparent',
                 border: 'none',
                 borderRadius: '8px',
-                color: 'white',
+                color: globalView === 'resources' ? 'white' : t.text,
                 fontSize: '14px',
                 fontWeight: '600',
                 cursor: 'pointer',
@@ -1167,26 +1252,26 @@ const App = () => {
 
               return (
                 <div key={blockIndex} style={{
-                  backgroundColor: '#111827',
+                  backgroundColor: t.surface,
                   borderRadius: '12px',
                   marginBottom: '16px',
                   overflow: 'hidden',
-                  border: '1px solid #1f2937'
+                  border: `1px solid ${t.borderSubtle}`
                 }}>
                   <div style={{
-                    backgroundColor: '#1f2937',
+                    backgroundColor: t.surface2,
                     padding: '12px 16px',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center'
                   }}>
-                    <span style={{ fontWeight: '600', color: '#e5e7eb' }}>{block.day}</span>
-                    <span style={{ fontSize: '14px', color: '#9ca3af' }}>{block.focus}</span>
+                    <span style={{ fontWeight: '600', color: t.textStrong }}>{block.day}</span>
+                    <span style={{ fontSize: '14px', color: t.textMuted }}>{block.focus}</span>
                   </div>
 
                   {/* Planned Tasks */}
-                  <div style={{ padding: '16px', borderBottom: '1px solid #1f2937' }}>
-                    <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  <div style={{ padding: '16px', borderBottom: `1px solid ${t.borderSubtle}` }}>
+                    <div style={{ fontSize: '12px', color: t.textFaint, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                       Planned Tasks
                     </div>
                     {block.tasks.map((task, taskIndex) => {
@@ -1202,10 +1287,10 @@ const App = () => {
                             gap: '12px',
                             padding: '10px 12px',
                             marginBottom: '8px',
-                            backgroundColor: isChecked ? 'rgba(16, 185, 129, 0.1)' : 'rgba(31, 41, 55, 0.5)',
+                            backgroundColor: isChecked ? 'rgba(16, 185, 129, 0.1)' : t.tintStrong,
                             borderRadius: '8px',
                             cursor: 'pointer',
-                            border: isChecked ? '1px solid #10b981' : '1px solid #374151',
+                            border: isChecked ? '1px solid #10b981' : `1px solid ${t.border}`,
                             transition: 'all 0.2s'
                           }}
                         >
@@ -1213,7 +1298,7 @@ const App = () => {
                             width: '20px',
                             height: '20px',
                             borderRadius: '4px',
-                            border: isChecked ? 'none' : '2px solid #4b5563',
+                            border: isChecked ? 'none' : `2px solid ${t.muted2}`,
                             backgroundColor: isChecked ? '#10b981' : 'transparent',
                             display: 'flex',
                             alignItems: 'center',
@@ -1225,7 +1310,7 @@ const App = () => {
                           </div>
                           <span style={{
                             fontSize: '14px',
-                            color: isChecked ? '#6b7280' : '#d1d5db',
+                            color: isChecked ? t.textFaint : t.text2,
                             textDecoration: isChecked ? 'line-through' : 'none',
                             lineHeight: '1.5'
                           }}>
@@ -1237,8 +1322,8 @@ const App = () => {
                   </div>
 
                   {/* Daily Log for this block */}
-                  <div style={{ padding: '16px', backgroundColor: 'rgba(17, 24, 39, 0.5)' }}>
-                    <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  <div style={{ padding: '16px', backgroundColor: t.tintMed }}>
+                    <div style={{ fontSize: '12px', color: t.textFaint, marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                       Daily Log
                     </div>
                     {daysInBlock.map((day) => {
@@ -1251,7 +1336,7 @@ const App = () => {
                             alignItems: 'center',
                             gap: '12px',
                             padding: '8px 0',
-                            borderBottom: day !== daysInBlock[daysInBlock.length - 1] ? '1px solid #1f2937' : 'none'
+                            borderBottom: day !== daysInBlock[daysInBlock.length - 1] ? `1px solid ${t.borderSubtle}` : 'none'
                           }}
                         >
                           {/* Day Label */}
@@ -1259,7 +1344,7 @@ const App = () => {
                             width: '40px',
                             fontWeight: '600',
                             fontSize: '14px',
-                            color: dayData.completed ? '#4ade80' : '#9ca3af'
+                            color: dayData.completed ? t.successTextBright : t.textMuted
                           }}>
                             {day}
                           </div>
@@ -1271,7 +1356,7 @@ const App = () => {
                               width: '28px',
                               height: '28px',
                               borderRadius: '6px',
-                              border: dayData.completed ? 'none' : '2px solid #4b5563',
+                              border: dayData.completed ? 'none' : `2px solid ${t.muted2}`,
                               backgroundColor: dayData.completed ? '#16a34a' : 'transparent',
                               display: 'flex',
                               alignItems: 'center',
@@ -1294,16 +1379,16 @@ const App = () => {
                             onChange={(e) => updateDay(day, 'hours', e.target.value)}
                             style={{
                               width: '60px',
-                              backgroundColor: '#1f2937',
-                              border: '1px solid #374151',
+                              backgroundColor: t.surface2,
+                              border: `1px solid ${t.border}`,
                               borderRadius: '6px',
                               padding: '8px',
                               textAlign: 'center',
-                              color: 'white',
+                              color: t.text,
                               fontSize: '14px'
                             }}
                           />
-                          <span style={{ fontSize: '12px', color: '#6b7280' }}>hrs</span>
+                          <span style={{ fontSize: '12px', color: t.textFaint }}>hrs</span>
 
                           {/* Task Input */}
                           <input
@@ -1313,11 +1398,11 @@ const App = () => {
                             onChange={(e) => updateDay(day, 'task', e.target.value)}
                             style={{
                               flex: 1,
-                              backgroundColor: '#1f2937',
-                              border: '1px solid #374151',
+                              backgroundColor: t.surface2,
+                              border: `1px solid ${t.border}`,
                               borderRadius: '6px',
                               padding: '8px 12px',
-                              color: 'white',
+                              color: t.text,
                               fontSize: '14px'
                             }}
                           />
@@ -1338,7 +1423,7 @@ const App = () => {
                 borderRadius: '12px',
                 padding: '20px'
               }}>
-                <h3 style={{ color: '#34d399', fontWeight: '600', marginBottom: '16px', fontSize: '16px' }}>
+                <h3 style={{ color: t.successText, fontWeight: '600', marginBottom: '16px', fontSize: '16px' }}>
                   ✓ Deliverables
                 </h3>
                 <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
@@ -1349,9 +1434,9 @@ const App = () => {
                       gap: '8px',
                       marginBottom: '10px',
                       fontSize: '14px',
-                      color: '#a7f3d0'
+                      color: t.successTextPale
                     }}>
-                      <span style={{ color: '#34d399' }}>•</span>
+                      <span style={{ color: t.successText }}>•</span>
                       <span>{item}</span>
                     </li>
                   ))}
@@ -1365,7 +1450,7 @@ const App = () => {
                 borderRadius: '12px',
                 padding: '20px'
               }}>
-                <h3 style={{ color: '#f87171', fontWeight: '600', marginBottom: '16px', fontSize: '16px' }}>
+                <h3 style={{ color: t.dangerTextBright, fontWeight: '600', marginBottom: '16px', fontSize: '16px' }}>
                   ✗ Anti-Goals
                 </h3>
                 <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
@@ -1376,9 +1461,9 @@ const App = () => {
                       gap: '8px',
                       marginBottom: '10px',
                       fontSize: '14px',
-                      color: '#fca5a5'
+                      color: t.dangerText
                     }}>
-                      <span style={{ color: '#f87171' }}>•</span>
+                      <span style={{ color: t.dangerTextBright }}>•</span>
                       <span>{item}</span>
                     </li>
                   ))}
@@ -1387,9 +1472,9 @@ const App = () => {
             </div>
 
             {/* Tips */}
-            <div style={{ ...styles.card, marginTop: '24px', backgroundColor: 'rgba(31, 41, 55, 0.5)' }}>
-              <h3 style={{ fontWeight: '600', color: '#fbbf24', marginBottom: '12px' }}>⚡ Pro Tips</h3>
-              <ul style={{ fontSize: '14px', color: '#9ca3af', lineHeight: 1.8, margin: 0, paddingLeft: '20px' }}>
+            <div style={{ ...styles.card, marginTop: '24px', backgroundColor: t.tintStrong }}>
+              <h3 style={{ fontWeight: '600', color: t.warnText, marginBottom: '12px' }}>⚡ Pro Tips</h3>
+              <ul style={{ fontSize: '14px', color: t.textMuted, lineHeight: 1.8, margin: 0, paddingLeft: '20px' }}>
                 <li>Click planned tasks to mark them complete as you work through the week</li>
                 <li>Log your hours and what you worked on in the Daily Log section</li>
                 <li>Focus on deliverables, not perfection—ship something!</li>
@@ -1405,7 +1490,7 @@ const App = () => {
             {/* Weekly Goals */}
             <div style={styles.card}>
               <h3 style={styles.cardTitle}>Week {currentWeek} Goals</h3>
-              <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '16px' }}>Click to mark complete. Edit text if needed.</p>
+              <p style={{ fontSize: '12px', color: t.textFaint, marginBottom: '16px' }}>Click to mark complete. Edit text if needed.</p>
               {currentData.goals.map((goal, i) => (
                 <div
                   key={i}
@@ -1429,7 +1514,7 @@ const App = () => {
                     onChange={(e) => updateGoalText(i, e.target.value)}
                     style={{
                       ...styles.goalInput,
-                      color: goal.done ? '#4ade80' : '#e5e7eb',
+                      color: goal.done ? t.successTextBright : t.textStrong,
                       textDecoration: goal.done ? 'line-through' : 'none'
                     }}
                   />
@@ -1486,7 +1571,7 @@ const App = () => {
               
               <div style={{ marginTop: '24px' }}>
                 <label style={styles.label}>
-                  Energy Level This Week: <span style={{ color: 'white', fontWeight: 'bold' }}>{currentData.metrics.energyLevel}/10</span>
+                  Energy Level This Week: <span style={{ color: t.text, fontWeight: 'bold' }}>{currentData.metrics.energyLevel}/10</span>
                 </label>
                 <input
                   type="range"
@@ -1496,7 +1581,7 @@ const App = () => {
                   onChange={(e) => updateMetric('energyLevel', parseInt(e.target.value))}
                   style={styles.slider}
                 />
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#6b7280', marginTop: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: t.textFaint, marginTop: '8px' }}>
                   <span>😫 Burned out</span>
                   <span>😐 Neutral</span>
                   <span>⚡ Energized</span>
@@ -1511,8 +1596,8 @@ const App = () => {
           <div>
             {/* Wins */}
             <div style={{ ...styles.card, borderColor: '#15803d' }}>
-              <h3 style={{ ...styles.cardTitle, color: '#4ade80' }}>✓ Wins This Week</h3>
-              <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px' }}>What went well? What are you proud of?</p>
+              <h3 style={{ ...styles.cardTitle, color: t.successTextBright }}>✓ Wins This Week</h3>
+              <p style={{ fontSize: '12px', color: t.textFaint, marginBottom: '12px' }}>What went well? What are you proud of?</p>
               {currentData.wins.map((win, i) => (
                 <input
                   key={i}
@@ -1527,11 +1612,11 @@ const App = () => {
 
             {/* Next Week Focus */}
             <div style={{ ...styles.card, borderColor: '#b45309' }}>
-              <h3 style={{ ...styles.cardTitle, color: '#fbbf24' }}>→ Next Week Focus</h3>
-              <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px' }}>What are your top 3 priorities?</p>
+              <h3 style={{ ...styles.cardTitle, color: t.warnText }}>→ Next Week Focus</h3>
+              <p style={{ fontSize: '12px', color: t.textFaint, marginBottom: '12px' }}>What are your top 3 priorities?</p>
               {currentData.nextWeekFocus.map((focus, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                  <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>{i + 1}.</span>
+                  <span style={{ color: t.warnText, fontWeight: 'bold' }}>{i + 1}.</span>
                   <input
                     type="text"
                     placeholder={`Priority ${i + 1}...`}
@@ -1546,7 +1631,7 @@ const App = () => {
             {/* Reflection */}
             <div style={styles.card}>
               <h3 style={styles.cardTitle}>💭 Weekly Reflection</h3>
-              <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px' }}>
+              <p style={{ fontSize: '12px', color: t.textFaint, marginBottom: '12px' }}>
                 What worked? What did not? What will you do differently next week?
               </p>
               <textarea
@@ -1559,11 +1644,11 @@ const App = () => {
             </div>
 
             {/* Review Questions Guide */}
-            <div style={{ ...styles.card, backgroundColor: 'rgba(31, 41, 55, 0.5)' }}>
-              <h3 style={{ ...styles.cardTitle, color: '#d1d5db' }}>🔄 Sunday Review Checklist</h3>
+            <div style={{ ...styles.card, backgroundColor: t.tintStrong }}>
+              <h3 style={{ ...styles.cardTitle, color: t.text2 }}>🔄 Sunday Review Checklist</h3>
               <div style={styles.grid2}>
                 <div style={styles.reviewSection}>
-                  <div style={{ ...styles.reviewTitle, color: '#60a5fa' }}>Progress Check</div>
+                  <div style={{ ...styles.reviewTitle, color: t.infoText }}>Progress Check</div>
                   <ul style={styles.reviewList}>
                     <li>□ What did I ship this week?</li>
                     <li>□ What new thing did I learn?</li>
@@ -1571,7 +1656,7 @@ const App = () => {
                   </ul>
                 </div>
                 <div style={styles.reviewSection}>
-                  <div style={{ ...styles.reviewTitle, color: '#f87171' }}>Blockers</div>
+                  <div style={{ ...styles.reviewTitle, color: t.dangerTextBright }}>Blockers</div>
                   <ul style={styles.reviewList}>
                     <li>□ What slowed me down?</li>
                     <li>□ Where did I waste time?</li>
@@ -1579,7 +1664,7 @@ const App = () => {
                   </ul>
                 </div>
                 <div style={styles.reviewSection}>
-                  <div style={{ ...styles.reviewTitle, color: '#fbbf24' }}>Energy</div>
+                  <div style={{ ...styles.reviewTitle, color: t.warnText }}>Energy</div>
                   <ul style={styles.reviewList}>
                     <li>□ Am I burning out?</li>
                     <li>□ What energized me?</li>
@@ -1587,8 +1672,8 @@ const App = () => {
                   </ul>
                 </div>
                 <div style={styles.reviewSection}>
-                  <div style={{ ...styles.reviewTitle, color: '#4ade80' }}>The One Question</div>
-                  <p style={{ color: '#d1d5db', fontStyle: 'italic', fontSize: '14px' }}>
+                  <div style={{ ...styles.reviewTitle, color: t.successTextBright }}>The One Question</div>
+                  <p style={{ color: t.text2, fontStyle: 'italic', fontSize: '14px' }}>
                     "What ONE thing would make next week a win?"
                   </p>
                 </div>
@@ -1620,27 +1705,27 @@ const App = () => {
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
                   <thead>
-                    <tr style={{ backgroundColor: '#1f2937' }}>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #374151', color: '#e5e7eb' }}>Criteria</th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #374151', color: '#e5e7eb' }}>Weight</th>
-                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #374151', color: '#e5e7eb' }}>Question to Ask</th>
+                    <tr style={{ backgroundColor: t.surface2 }}>
+                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: `1px solid ${t.border}`, color: t.textStrong }}>Criteria</th>
+                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: `1px solid ${t.border}`, color: t.textStrong }}>Weight</th>
+                      <th style={{ padding: '12px', textAlign: 'left', borderBottom: `1px solid ${t.border}`, color: t.textStrong }}>Question to Ask</th>
                     </tr>
                   </thead>
                   <tbody>
                     {ideaFramework.criteria.map((c, i) => (
-                      <tr key={i} style={{ backgroundColor: i % 2 === 0 ? 'transparent' : 'rgba(31, 41, 55, 0.3)' }}>
-                        <td style={{ padding: '12px', borderBottom: '1px solid #1f2937', color: '#d1d5db', fontWeight: '500' }}>{c.name}</td>
-                        <td style={{ padding: '12px', borderBottom: '1px solid #1f2937' }}>
+                      <tr key={i} style={{ backgroundColor: i % 2 === 0 ? 'transparent' : t.tintWeak }}>
+                        <td style={{ padding: '12px', borderBottom: `1px solid ${t.borderSubtle}`, color: t.text2, fontWeight: '500' }}>{c.name}</td>
+                        <td style={{ padding: '12px', borderBottom: `1px solid ${t.borderSubtle}` }}>
                           <span style={{
                             padding: '4px 8px',
                             borderRadius: '4px',
                             fontSize: '12px',
                             fontWeight: '500',
                             backgroundColor: c.weight === 'High' ? 'rgba(239, 68, 68, 0.2)' : c.weight === 'Medium' ? 'rgba(251, 191, 36, 0.2)' : 'rgba(107, 114, 128, 0.2)',
-                            color: c.weight === 'High' ? '#fca5a5' : c.weight === 'Medium' ? '#fcd34d' : '#9ca3af'
+                            color: c.weight === 'High' ? t.dangerText : c.weight === 'Medium' ? t.warnTextPale : t.textMuted
                           }}>{c.weight}</span>
                         </td>
-                        <td style={{ padding: '12px', borderBottom: '1px solid #1f2937', color: '#9ca3af' }}>{c.question}</td>
+                        <td style={{ padding: '12px', borderBottom: `1px solid ${t.borderSubtle}`, color: t.textMuted }}>{c.question}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1656,58 +1741,58 @@ const App = () => {
                   <div key={i} style={{
                     textAlign: 'center',
                     padding: '16px',
-                    backgroundColor: '#1f2937',
+                    backgroundColor: t.surface2,
                     borderRadius: '8px'
                   }}>
-                    <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#e5e7eb' }}>{s.score}</div>
-                    <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '4px' }}>{s.meaning}</div>
+                    <div style={{ fontSize: '28px', fontWeight: 'bold', color: t.textStrong }}>{s.score}</div>
+                    <div style={{ fontSize: '12px', color: t.textMuted, marginTop: '4px' }}>{s.meaning}</div>
                   </div>
                 ))}
               </div>
-              <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '16px' }}>
+              <p style={{ fontSize: '13px', color: t.textFaint, marginTop: '16px' }}>
                 Score each idea on all criteria. Total = 18 max. Prioritize anything above 12.
               </p>
             </div>
 
             {/* Starter Ideas */}
             <div style={{ ...styles.card, border: '1px solid #7c3aed' }}>
-              <h3 style={{ ...styles.cardTitle, color: '#a78bfa' }}>🚀 Starter Ideas (If You're Stuck)</h3>
-              <p style={{ fontSize: '13px', color: '#9ca3af', marginBottom: '16px' }}>
+              <h3 style={{ ...styles.cardTitle, color: t.purpleText }}>🚀 Starter Ideas (If You're Stuck)</h3>
+              <p style={{ fontSize: '13px', color: t.textMuted, marginBottom: '16px' }}>
                 Proven learning projects. Pick one if you can't think of your own problem to solve.
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
                 {ideaFramework.starterIdeas.map((item, i) => (
                   <div key={i} style={{
-                    backgroundColor: '#1f2937',
+                    backgroundColor: t.surface2,
                     padding: '16px',
                     borderRadius: '8px',
-                    border: '1px solid #374151'
+                    border: `1px solid ${t.border}`
                   }}>
-                    <div style={{ fontWeight: '600', color: '#e5e7eb', marginBottom: '8px' }}>{item.idea}</div>
+                    <div style={{ fontWeight: '600', color: t.textStrong, marginBottom: '8px' }}>{item.idea}</div>
                     <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                       <span style={{
                         fontSize: '11px',
                         padding: '2px 8px',
                         borderRadius: '4px',
                         backgroundColor: item.difficulty === 'Easy' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(251, 191, 36, 0.2)',
-                        color: item.difficulty === 'Easy' ? '#6ee7b7' : '#fcd34d'
+                        color: item.difficulty === 'Easy' ? t.successBadgeText : t.warnTextPale
                       }}>{item.difficulty}</span>
                       <span style={{
                         fontSize: '11px',
                         padding: '2px 8px',
                         borderRadius: '4px',
                         backgroundColor: 'rgba(107, 114, 128, 0.2)',
-                        color: '#9ca3af'
+                        color: t.textMuted
                       }}>{item.time}</span>
                     </div>
-                    <div style={{ fontSize: '12px', color: '#6b7280' }}>Learn: {item.learning}</div>
+                    <div style={{ fontSize: '12px', color: t.textFaint }}>Learn: {item.learning}</div>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Evaluation Template */}
-            <div style={{ ...styles.card, backgroundColor: '#0f172a' }}>
+            <div style={styles.card}>
               <h3 style={styles.cardTitle}>Evaluation Template</h3>
               <div style={{
                 fontFamily: 'monospace',
@@ -1758,9 +1843,9 @@ const App = () => {
                     alignItems: 'flex-start',
                     gap: '16px',
                     padding: '16px',
-                    backgroundColor: '#1f2937',
+                    backgroundColor: t.surface2,
                     borderRadius: '8px',
-                    border: '1px solid #374151'
+                    border: `1px solid ${t.border}`
                   }}>
                     <div style={{
                       width: '48px',
@@ -1779,12 +1864,12 @@ const App = () => {
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                        <span style={{ fontWeight: '600', color: '#e5e7eb' }}>{tool.name}</span>
-                        <span style={{ fontSize: '11px', padding: '2px 8px', backgroundColor: 'rgba(107, 114, 128, 0.3)', borderRadius: '4px', color: '#9ca3af' }}>{tool.type}</span>
-                        <span style={{ fontSize: '11px', padding: '2px 8px', backgroundColor: 'rgba(16, 185, 129, 0.2)', borderRadius: '4px', color: '#6ee7b7' }}>{tool.cost}</span>
+                        <span style={{ fontWeight: '600', color: t.textStrong }}>{tool.name}</span>
+                        <span style={{ fontSize: '11px', padding: '2px 8px', backgroundColor: 'rgba(107, 114, 128, 0.3)', borderRadius: '4px', color: t.textMuted }}>{tool.type}</span>
+                        <span style={{ fontSize: '11px', padding: '2px 8px', backgroundColor: 'rgba(16, 185, 129, 0.2)', borderRadius: '4px', color: t.successBadgeText }}>{tool.cost}</span>
                       </div>
-                      <p style={{ fontSize: '13px', color: '#9ca3af', marginTop: '4px', marginBottom: '4px' }}>{tool.why}</p>
-                      <span style={{ fontSize: '12px', color: '#60a5fa' }}>{tool.link}</span>
+                      <p style={{ fontSize: '13px', color: t.textMuted, marginTop: '4px', marginBottom: '4px' }}>{tool.why}</p>
+                      <span style={{ fontSize: '12px', color: t.infoText }}>{tool.link}</span>
                     </div>
                   </div>
                 ))}
@@ -1801,9 +1886,9 @@ const App = () => {
                     alignItems: 'flex-start',
                     gap: '16px',
                     padding: '16px',
-                    backgroundColor: item.recommended ? 'rgba(16, 185, 129, 0.1)' : '#1f2937',
+                    backgroundColor: item.recommended ? 'rgba(16, 185, 129, 0.1)' : t.surface2,
                     borderRadius: '8px',
-                    border: item.recommended ? '1px solid #10b981' : '1px solid #374151'
+                    border: item.recommended ? '1px solid #10b981' : `1px solid ${t.border}`
                   }}>
                     <div style={{
                       width: '48px',
@@ -1822,14 +1907,14 @@ const App = () => {
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                        <span style={{ fontWeight: '600', color: '#e5e7eb' }}>{item.name}</span>
+                        <span style={{ fontWeight: '600', color: t.textStrong }}>{item.name}</span>
                         {item.recommended && (
                           <span style={{ fontSize: '11px', padding: '2px 8px', backgroundColor: '#10b981', borderRadius: '4px', color: 'white' }}>Recommended</span>
                         )}
-                        <span style={{ fontSize: '11px', padding: '2px 8px', backgroundColor: 'rgba(107, 114, 128, 0.3)', borderRadius: '4px', color: '#9ca3af' }}>{item.type}</span>
+                        <span style={{ fontSize: '11px', padding: '2px 8px', backgroundColor: 'rgba(107, 114, 128, 0.3)', borderRadius: '4px', color: t.textMuted }}>{item.type}</span>
                       </div>
-                      <p style={{ fontSize: '13px', color: '#9ca3af', marginTop: '4px', marginBottom: '4px' }}>{item.why}</p>
-                      <span style={{ fontSize: '12px', color: '#60a5fa' }}>{item.link}</span>
+                      <p style={{ fontSize: '13px', color: t.textMuted, marginTop: '4px', marginBottom: '4px' }}>{item.why}</p>
+                      <span style={{ fontSize: '12px', color: t.infoText }}>{item.link}</span>
                     </div>
                   </div>
                 ))}
@@ -1839,7 +1924,7 @@ const App = () => {
             {/* Weekly Tutorial Path */}
             <div style={styles.card}>
               <h3 style={styles.cardTitle}>📚 Weekly Tutorial Path</h3>
-              <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '16px' }}>
+              <p style={{ fontSize: '13px', color: t.textFaint, marginBottom: '16px' }}>
                 Complete each week's tutorials before moving to the next. Red dot = required.
               </p>
               {[1, 2, 3, 4].map(week => (
@@ -1847,10 +1932,10 @@ const App = () => {
                   <div style={{
                     fontSize: '14px',
                     fontWeight: '600',
-                    color: '#9ca3af',
+                    color: t.textMuted,
                     marginBottom: '12px',
                     paddingBottom: '8px',
-                    borderBottom: '1px solid #1f2937'
+                    borderBottom: `1px solid ${t.borderSubtle}`
                   }}>
                     Week {week}: {weekThemes[week].title}
                   </div>
@@ -1861,9 +1946,9 @@ const App = () => {
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         padding: '12px 16px',
-                        backgroundColor: tutorial.required ? '#1f2937' : 'rgba(31, 41, 55, 0.3)',
+                        backgroundColor: tutorial.required ? t.surface2 : t.tintWeak,
                         borderRadius: '8px',
-                        border: '1px solid #374151'
+                        border: `1px solid ${t.border}`
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <div style={{
@@ -1873,14 +1958,14 @@ const App = () => {
                             backgroundColor: tutorial.required ? '#ef4444' : '#4b5563'
                           }}></div>
                           <div>
-                            <div style={{ fontWeight: '500', color: '#e5e7eb', fontSize: '14px' }}>{tutorial.title}</div>
-                            <div style={{ fontSize: '12px', color: '#6b7280' }}>{tutorial.source}</div>
+                            <div style={{ fontWeight: '500', color: t.textStrong, fontSize: '14px' }}>{tutorial.title}</div>
+                            <div style={{ fontSize: '12px', color: t.textFaint }}>{tutorial.source}</div>
                           </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontSize: '13px', color: '#9ca3af' }}>{tutorial.duration}</span>
+                          <span style={{ fontSize: '13px', color: t.textMuted }}>{tutorial.duration}</span>
                           {tutorial.required && (
-                            <span style={{ fontSize: '10px', padding: '2px 6px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderRadius: '4px', color: '#fca5a5' }}>Required</span>
+                            <span style={{ fontSize: '10px', padding: '2px 6px', backgroundColor: 'rgba(239, 68, 68, 0.2)', borderRadius: '4px', color: t.dangerText }}>Required</span>
                           )}
                         </div>
                       </div>
@@ -1892,8 +1977,8 @@ const App = () => {
 
             {/* Learning Tips */}
             <div style={{ ...styles.card, backgroundColor: 'rgba(251, 191, 36, 0.1)', border: '1px solid #fbbf24' }}>
-              <h3 style={{ fontWeight: '600', color: '#fbbf24', marginBottom: '12px' }}>⚡ Learning Strategy</h3>
-              <ul style={{ fontSize: '14px', color: '#fcd34d', lineHeight: 2, margin: 0, paddingLeft: '20px' }}>
+              <h3 style={{ fontWeight: '600', color: t.warnText, marginBottom: '12px' }}>⚡ Learning Strategy</h3>
+              <ul style={{ fontSize: '14px', color: t.warnTextPale, lineHeight: 2, margin: 0, paddingLeft: '20px' }}>
                 <li><strong>Rule 1:</strong> Don't just watch—build along. Pause videos constantly.</li>
                 <li><strong>Rule 2:</strong> When stuck for 15 min, ask Claude Code. Don't suffer.</li>
                 <li><strong>Rule 3:</strong> Complete required tutorials before optional ones.</li>
